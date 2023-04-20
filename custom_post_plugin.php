@@ -18,6 +18,7 @@
 	die;
 }
 
+
 function create_custom_post_type()
 {
 	$supports = array(
@@ -118,7 +119,7 @@ add_action('init','create_custom_post_type');
 
 function custom_dropdown_shortcode($atts) {
     // Generate dropdown HTML
-        $output='<form action="" method="post">';
+        $output='<form action="" method="get">';
         $output .= '<select name="Post_type" class="dropdown_class">';
         $output.='<option value="">--Please choose an option--</option>';
     
@@ -140,52 +141,74 @@ function custom_dropdown_shortcode($atts) {
         return $output;
     }
     add_shortcode('dropdown', 'custom_dropdown_shortcode');
-
-function validation($content)
-{
-if(isset($_POST['submit'])&&($_POST['Post_type']=='session'||$_POST['Post_type']=='coursess')&&isset($_POST['Posts'])&&$_POST['Posts']>0)
-{
-   $post_type=$_POST['Post_type'];
-   $postCount=$_POST['Posts'];
-   
-   $args=array(
-	'post_type' => $post_type,
-	'posts_per_page' => $postCount,
-	'orderby' => 'date',
-	'order' => 'ASC',
-   );
-
-   $custom_post=new WP_Query($args);
-
-   $new_content="<div class='table_style'>"
-   ."<table class='table_data'>"
-   ."<tr><th>Post ID</th>"
-   ."<th>Post Title</th>"
-   ."<th>Description</th>"
-   ."<th>Slug</th>"
-   ."<th>Link</th>"
-   ."<th>Publish Date</th>"
-   ."</tr>";
-
-  
-   foreach ( $custom_post->posts as $post ){
-	$new_content.="<tr><td>".$post->ID."</td>"
-	."<td>".$post->post_title."</td>"
-	."<td>".wp_trim_words($post->post_content,20)."</td>"
-	."<td>".$post->post_name."</td>"
-	."<td>".get_permalink( $post->ID )."</td>"
-	."<td>".$post->post_date."</td></tr>";
-
-	}
-	$new_content.="</div>";
 	
 
-$content.=$new_content;
-return $content;
-}
-else{
+// 	function display_post() {
+		
+// 		if (isset($_POST['submit']) && ($_POST['Post_type'] == 'session' || $_POST['Post_type'] == 'coursess') && isset($_POST['Posts']) && $_POST['Posts'] > 0) {
+		 
+// 	 $post_type = $_POST['Post_type'];
+// 	 $postCount = $_POST['Posts'];
+		
+// 	}
+// }
+
+// add_action('init','display_post');
+
+
+
+	function post_table_display($content){
+		if (isset($_GET['Post_type'])&&isset($_GET['Posts'])) {
+			$postCount = intval($_GET['Posts']);
+			$post_type=$_GET['Post_type'];
+
+		$paged=( get_query_var('paged') ) ? get_query_var('paged') : 1;
+		$args = array(
+			'post_type' => $post_type,
+			'posts_per_page' =>$postCount,
+			'paged' => $paged,
+			'orderby' => 'date',
+			'order' => 'ASC',
+		);
+
+		$custom_post = new WP_Query($args);
+		
+
+		$new_content = "<div class='table_style'><table class='table_data'><tr><th>Post ID</th><th>Post Title</th><th>Description</th><th>Slug</th><th>Link</th><th>Publish Date</th></tr>";
+
+		if ($custom_post->have_posts()) {
+			while ($custom_post->have_posts()) {
+				$custom_post->the_post();
+
+				$new_content .= "<tr><td>" . get_the_ID() . "</td>"
+				. "<td>" . get_the_title() . "</td>"
+				. "<td>" . wp_trim_words(get_the_content(), 20) . "</td>"
+				. "<td>" . get_post_field('post_name', get_the_ID()) . "</td>"
+				. "<td>" . get_permalink(get_the_ID()) . "</td>"
+				. "<td>" . get_the_date() . "</td></tr>";
+			}
+
+			$new_content .= "</table></div>";
+			$big=999999999;
+			
+
+			$new_content .= paginate_links(array(
+				'base' => str_replace( $big, '%#%', esc_url( get_pagenum_link( $big ) ) ),
+				'total' => $custom_post->max_num_pages,
+				'current' =>  max( 1, get_query_var('paged') ),
+				'format' => '?paged=%#%',
+				'prev_next' => true,
+				'prev_text' => __('&laquo; Previous'),
+				'next_text' => __('Next &raquo;'),
+				
+			));
+
+			wp_reset_postdata();
+			$content.=$new_content;
+			return $content;
+		}
+	}
 	return $content;
 }
-}
-
-add_filter('the_content','validation');
+		
+	add_filter('the_content','post_table_display');
