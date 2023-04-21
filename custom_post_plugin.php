@@ -161,8 +161,15 @@ function custom_dropdown_shortcode($atts) {
 		if (isset($_GET['Post_type'])&&isset($_GET['Posts'])) {
 			$postCount = intval($_GET['Posts']);
 			$post_type=$_GET['Post_type'];
+			$paged=( get_query_var('paged') ) ? get_query_var('paged') : 1;
 
-		$paged=( get_query_var('paged') ) ? get_query_var('paged') : 1;
+			if($paged>1)
+			{
+				add_shortcode( 'dropdown', '__return_false' );
+			}
+
+     
+
 		$args = array(
 			'post_type' => $post_type,
 			'posts_per_page' =>$postCount,
