@@ -123,7 +123,7 @@ function custom_dropdown_shortcode($atts) {
         $output .= '<select name="Post_type" class="dropdown_class">';
         $output.='<option value="">--Please choose an option--</option>';
     
-        $output.='<option value="session">Session</option>';
+        $output.='<option value="session" selected>Session</option>';
         $output.='<option value="coursess">Courses</option>';
     
         $output .= '</select>';
@@ -181,21 +181,20 @@ function custom_dropdown_shortcode($atts) {
 		$custom_post = new WP_Query($args);
 		
 
-		$new_content = "<div class='table_style'><table class='table_data'><tr><th>Post ID</th><th>Post Title</th><th>Description</th><th>Slug</th><th>Link</th><th>Publish Date</th></tr>";
-
+		$new_content ="<div class='card_container'>";
 		if ($custom_post->have_posts()) {
 			while ($custom_post->have_posts()) {
 				$custom_post->the_post();
+				$image=wp_get_attachment_image_src( get_post_thumbnail_id( get_the_id() ), 'custom_img' );
 
-				$new_content .= "<tr><td>" . get_the_ID() . "</td>"
-				. "<td>" . get_the_title() . "</td>"
-				. "<td>" . wp_trim_words(get_the_content(), 20) . "</td>"
-				. "<td>" . get_post_field('post_name', get_the_ID()) . "</td>"
-				. "<td>" . get_permalink(get_the_ID()) . "</td>"
-				. "<td>" . get_the_date() . "</td></tr>";
+				$new_content .= "<div class='card_view'>"
+				."<div class='thumbnail'><img src='".$image[0]."' alt='post_image'></div>"
+				. "<div class='title_tag'>" . get_the_title() . "</div>"
+				. "<div class='desc'>" . wp_trim_words(get_the_content(), 5). "</div></div>";
+
 			}
 
-			$new_content .= "</table></div>";
+			$new_content .= "</div>";
 			$big=999999999;
 			
 
